@@ -1,9 +1,9 @@
 @php $r = $registrant ?? null; @endphp
 <div class="row g-3">
-  <div class="col-md-4"><label class="form-label">Control No.</label>
-    <input class="form-control bg-light" value="{{ $control }}" readonly>
-    <div class="form-text">Auto-generated</div></div>
-  <div class="col-md-8"><label class="form-label">Full Name</label>
+  @if(isset($control))
+  <div class="col-md-4"><label class="form-label">Control No.</label><input class="form-control bg-light" value="{{ $control }}" readonly><div class="form-text">Automatically assigned; never editable.</div></div>
+  @endif
+  <div class="col-md-8"><label class="form-label">Complete Name</label>
     <input name="name" class="form-control" value="{{ old('name', $r->name ?? '') }}" required></div>
   <div class="col-md-4"><label class="form-label">Status</label>
     <select name="status" class="form-select" required>
@@ -14,7 +14,7 @@
     </select></div>
   <div class="col-md-4"><label class="form-label">Citizenship</label>
     <input name="citizenship" class="form-control" value="{{ old('citizenship', $r->citizenship ?? 'Filipino') }}" required></div>
-  <div class="col-md-2"><label class="form-label">Birthdate</label>
+  <div class="col-md-2"><label class="form-label">Date of Birth</label>
     <input type="date" id="birthdate" name="birthdate" class="form-control" max="{{ now()->toDateString() }}"
       value="{{ old('birthdate', optional($r->birthdate ?? null)->format('Y-m-d')) }}" required></div>
   <div class="col-md-2"><label class="form-label">Age</label>

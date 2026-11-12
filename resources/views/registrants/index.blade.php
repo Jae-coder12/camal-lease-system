@@ -9,8 +9,8 @@
 <thead><tr><th>Control #</th><th>Name</th><th>Status</th><th>Citizenship</th><th>Age</th><th>Contact</th><th></th></tr></thead><tbody>
 @forelse($registrants as $r)
 <tr><td>{{ $r->control_number }}</td><td>{{ $r->name }}<br><small class="text-muted">{{ $r->address }}</small></td><td>{{ $r->status }}</td><td>{{ $r->citizenship }}</td><td>{{ $r->age }}</td><td>{{ $r->contact_number }}</td>
-<td class="text-end text-nowrap"><a href="{{ route('registrants.edit',$r) }}" class="btn btn-sm btn-outline-primary">Edit</a>
-<form method="POST" action="{{ route('registrants.destroy',$r) }}" class="d-inline" onsubmit="return confirm('Delete this registrant? Their stalls will become available.')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
+<td class="text-end text-nowrap"><a href="{{ route('registrants.show',$r) }}" class="btn btn-sm btn-outline-secondary">View</a> <a href="{{ route('registrants.edit',$r) }}" class="btn btn-sm btn-outline-primary">Edit</a>
+<form method="POST" action="{{ route('registrants.destroy',$r) }}" class="d-inline" onsubmit="return confirm('Delete this registrant only if they have no history?')">@csrf @method('DELETE')<button class="btn btn-sm btn-outline-danger">Delete</button></form></td></tr>
 @empty <tr><td colspan="7" class="text-center text-muted">No registrants found.</td></tr>@endforelse
 </tbody></table></div></div>
 <div class="mt-3">{{ $registrants->links('pagination::bootstrap-5') }}</div>

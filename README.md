@@ -1,59 +1,82 @@
-<p align="center"><a href="https://laravel.com" target="_blank"><img src="https://raw.githubusercontent.com/laravel/art/master/logo-lockup/5%20SVG/2%20CMYK/1%20Full%20Color/laravel-logolockup-cmyk-red.svg" width="400" alt="Laravel Logo"></a></p>
+# Camalaniugan Public Market Stall & Rental Management
 
-<p align="center">
-<a href="https://github.com/laravel/framework/actions"><img src="https://github.com/laravel/framework/workflows/tests/badge.svg" alt="Build Status"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/dt/laravel/framework" alt="Total Downloads"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/v/laravel/framework" alt="Latest Stable Version"></a>
-<a href="https://packagist.org/packages/laravel/framework"><img src="https://img.shields.io/packagist/l/laravel/framework" alt="License"></a>
-</p>
+A Laravel 12 application for public stall browsing, applicant registration, application review, stall assignment, lease monitoring, and payment receipts for the Municipality of Camalaniugan.
 
-## About Laravel
+## Requirements
 
-Laravel is a web application framework with expressive, elegant syntax. We believe development must be an enjoyable and creative experience to be truly fulfilling. Laravel takes the pain out of development by easing common tasks used in many web projects, such as:
+- PHP 8.2+
+- Composer
+- Node.js 20+ and npm
+- MySQL 8+ (or a compatible MariaDB release)
 
-- [Simple, fast routing engine](https://laravel.com/docs/routing).
-- [Powerful dependency injection container](https://laravel.com/docs/container).
-- Multiple back-ends for [session](https://laravel.com/docs/session) and [cache](https://laravel.com/docs/cache) storage.
-- Expressive, intuitive [database ORM](https://laravel.com/docs/eloquent).
-- Database agnostic [schema migrations](https://laravel.com/docs/migrations).
-- [Robust background job processing](https://laravel.com/docs/queues).
-- [Real-time event broadcasting](https://laravel.com/docs/broadcasting).
+## Install
 
-Laravel is accessible, powerful, and provides tools required for large, robust applications.
+```powershell
+composer install
+Copy-Item .env.example .env
+php artisan key:generate
+npm install
+npm run build
+```
 
-## Learning Laravel
+Set the MySQL database name, user, and password in `.env`, then create that database before migrating.
 
-Laravel has the most extensive and thorough [documentation](https://laravel.com/docs) and video tutorial library of all modern web application frameworks, making it a breeze to get started with the framework. You can also check out [Laravel Learn](https://laravel.com/learn), where you will be guided through building a modern Laravel application.
+## Secure administrator setup
 
-If you don't feel like reading, [Laracasts](https://laracasts.com) can help. Laracasts contains thousands of video tutorials on a range of topics including Laravel, modern PHP, unit testing, and JavaScript. Boost your skills by digging into our comprehensive video library.
+Set these values in the private local `.env` file before seeding:
 
-## Laravel Sponsors
+```dotenv
+ADMIN_NAME="Market Administrator"
+ADMIN_EMAIL=market-admin@example.gov.ph
+ADMIN_USERNAME=market-admin
+ADMIN_PASSWORD=use-a-unique-password-of-at-least-12-characters
+```
 
-We would like to extend our thanks to the following sponsors for funding Laravel development. If you are interested in becoming a sponsor, please visit the [Laravel Partners program](https://partners.laravel.com).
+Set these values in `.env`, not `.env.example`. `ADMIN_USERNAME` must be a handle of 3–40 letters, numbers, dashes, or underscores; use `ADMIN_EMAIL` for the email address. If the username is left blank or mistakenly set to the email, the seeder derives a handle from the email prefix and appends `-admin`. `AdminUserSeeder` requires a unique password of at least 12 characters. It never stores a password in source control, leaves an existing administrator's credentials unchanged when rerun, and refuses to promote a non-administrator account. Do not commit `.env`. The administrator can sign in using the configured username or email.
 
-### Premium Partners
+## Database setup
 
-- **[Vehikl](https://vehikl.com)**
-- **[Tighten Co.](https://tighten.co)**
-- **[Kirschbaum Development Group](https://kirschbaumdevelopment.com)**
-- **[64 Robots](https://64robots.com)**
-- **[Curotec](https://www.curotec.com/services/technologies/laravel)**
-- **[DevSquad](https://devsquad.com/hire-laravel-developers)**
-- **[Redberry](https://redberry.international/laravel-development)**
-- **[Active Logic](https://activelogic.com)**
+```powershell
+php artisan migrate --force
+php artisan db:seed --force
+```
 
-## Contributing
+`MarketReferenceSeeder` loads the five requested building categories and 208 source records. It preserves original stall numbers, individual rents and frequencies, printed occupant names, shared layout group labels, and uncertainty notes. It includes the explicitly labeled Building D rice/gilingan stalls 237–246 and Building E stalls 247–272 visible in the supplied images, in addition to the ranges listed in the brief. Rates follow each source section (including ₱20 daily-cash tickets, ₱400/₱450, and individual ₱600/₱1,000/₱1,200 monthly records). Records whose occupancy or handwriting is unclear are marked inactive and require administrator verification. Reference highlighting colors are not used to determine occupancy. Seeders use `firstOrCreate`, so re-running them does not overwrite later administrative edits.
 
-Thank you for considering contributing to the Laravel framework! The contribution guide can be found in the [Laravel documentation](https://laravel.com/docs/contributions).
+Other supplied pages show meat, fish, eatery, and main-building sections without an unambiguous Building A–E mapping. They are not silently assigned to a building or marked available; verify their building mapping and enter them through the Buildings/Stalls administrator pages before publishing them.
 
-## Code of Conduct
+Control numbers are allocated from a transaction-locked annual sequence and have a unique database constraint. The migration initializes the sequence from existing `YYYY-NNN` records.
 
-In order to ensure that the Laravel community is welcoming to all, please review and abide by the [Code of Conduct](https://laravel.com/docs/contributions#code-of-conduct).
+## Run locally
 
-## Security Vulnerabilities
+```powershell
+php artisan serve
+```
 
-If you discover a security vulnerability within Laravel, please send an e-mail to Taylor Otwell via [taylor@laravel.com](mailto:taylor@laravel.com). All security vulnerabilities will be promptly addressed.
+Open `http://127.0.0.1:8000`. For frontend development, run `npm run dev` in a second terminal.
 
-## License
+## Market operation
 
-The Laravel framework is open-sourced software licensed under the [MIT license](https://opensource.org/licenses/MIT).
+- Visitors can select Buildings A–E and inspect individual stall status and rental rate without an account.
+- Applicants register with a username/email and must be 18 or older. They apply with their generated control number, business purpose, and optional PDF/JPG/PNG supporting document (up to 5 MB).
+- Administrators sign in at `/admin/login`; applicant accounts cannot use this endpoint. The dedicated `/admin/dashboard` and transaction screens are protected by the administrator role.
+- Administrator and applicant dashboards use live, role-scoped records; administrators can review the audit history at `/admin/activity-logs`.
+- Pending applications reserve one stall-occupancy space. Administrators record `Under Review`, `Approved`, `Rejected`, or `Completed` decisions with a status history and the responsible user. Approval and contract creation run in one database transaction; each approved application links to its generated lease. Exclusive-stall competitors are closed after approval. Configured shared capacity is tracked through separate occupant/lease records.
+- Lease contracts snapshot tenant details and contract terms, and can be previewed, printed, or downloaded as PDFs. Administrators may update, renew, or terminate contracts; renewals create a linked new contract without overwriting the old one. Contract and application changes are retained in the activity and status histories.
+- Lease expiration and warning status are calculated from dates. Configure the warning threshold with `LEASE_WARNING_DAYS`.
+- Record payments explicitly in the Payments module; active leases do not imply that rent was paid. Pending transactions can be approved or rejected with an audit entry and applicant notification; receipts are available only for paid transactions.
+- Historical applications, leases, occupants, payments, and administrator actions are retained. Stalls with transaction history cannot be deleted.
+- Database notifications are created for registration, applications, decisions, and lease expiration. Configure Laravel's scheduler to run daily for expiration notifications:
+
+```powershell
+php artisan schedule:run
+```
+
+On a production host, run the Laravel scheduler every minute using the host's normal scheduler/cron service.
+
+## Validation
+
+```powershell
+php artisan test
+npm run build
+```

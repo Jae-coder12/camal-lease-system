@@ -3,6 +3,7 @@ namespace App\Http\Controllers;
 
 use App\Models\Registrant;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\DB;
 
 class RegistrantController extends Controller
 {
@@ -12,7 +13,7 @@ class RegistrantController extends Controller
             'name' => 'required|string|max:150',
             'status' => 'required|in:Single,Married,Widowed,Separated,Divorced',
             'citizenship' => 'required|string|max:80',
-            'birthdate' => 'required|date|before:today',
+            'birthdate' => 'required|date|before_or_equal:' . today()->subYears(18)->toDateString(),
             'address' => 'required|string|max:255',
             'contact_number' => ['required', 'regex:/^[0-9+\-\s()]{7,20}$/'],
         ];
@@ -29,18 +30,31 @@ class RegistrantController extends Controller
 
     public function create()
     {
-        return view('registrants.form', ['registrant' => new Registrant, 'control' => Registrant::nextControlNumber()]);
+        return view('registrants.form', ['registrant' => new Registrant, 'control' => 'Assigned when saved']);
     }
 
     public function store(Request $request)
     {
-        Registrant::create($request->validate(self::rules()));
+        $registrant = Registrant::create($request->validate(self::rules()));
+        DB::table('activity_logs')->insert([
+            'user_id' => auth()->id(), 'action' => 'registrant.created',
+            'subject_type' => Registrant::class, 'subject_id' => $registrant->id,
+            'details' => json_encode(['control_number' => $registrant->control_number]),
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
         return redirect()->route('registrants.index')->with('success', 'Registrant added.');
     }
 
     public function edit(Registrant $registrant)
     {
         return view('registrants.form', ['registrant' => $registrant, 'control' => $registrant->control_number]);
+    }
+
+    public function show(Registrant $registrant)
+    {
+        return view('registrants.show', [
+            'registrant' => $registrant->load(['user', 'applications.stall.building', 'leases.stall.building']),
+        ]);
     }
 
     public function update(Request $request, Registrant $registrant)
@@ -51,7 +65,15 @@ class RegistrantController extends Controller
 
     public function destroy(Registrant $registrant)
     {
-        $registrant->delete();
-        return redirect()->route('registrants.index')->with('success', 'Registrant deleted. Their stalls are now available.');
+        $deleted = DB::transaction(function () use ($registrant) {
+            $lockedRegistrant = Registrant::query()->lockForUpdate()->findOrFail($registrant->id);
+            if ($lockedRegistrant->leases()->exists() || $lockedRegistrant->applications()->exists()) return false;
+            $lockedRegistrant->delete();
+            return true;
+        }, 5);
+        if (!$deleted) {
+            return back()->with('error', 'This registrant has historical records and cannot be deleted.');
+        }
+        return redirect()->route('registrants.index')->with('success', 'Registrant deleted.');
     }
 }
